@@ -1,10 +1,20 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
+import { StrictMode } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import ReactDOM from "react-dom/client";
 
-createRoot(document.getElementById('root')).render(
+import "./index.css";
+import App from "./App.jsx";
+import AddWord from "./components/add/AddWord.jsx";
+import EditWord from "./components/edit/EditWord.jsx";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <App />
-  </StrictMode>,
-)
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<App />} />
+        <Route path="/add" element={<AddWord />} />
+        <Route path="/edit/:id" element={<EditWord />} />
+      </Routes>
+    </BrowserRouter>
+  </StrictMode>
+);

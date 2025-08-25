@@ -1,39 +1,15 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import wordsData from "./data/words.json";
 import "./App.css";
-
-const useStorageState = (key, initialState) => {
-  const isArray = Array.isArray(initialState);
-
-  const [value, setValue] = useState(() => {
-    const stored = localStorage.getItem(key);
-
-    if (stored) {
-      try {
-        return isArray ? JSON.parse(stored) : stored;
-      } catch {
-        return initialState;
-      }
-    }
-    return initialState;
-  });
-
-  useEffect(() => {
-    localStorage.setItem(key, isArray ? JSON.stringify(value) : value);
-  }, [key, value, isArray]);
-
-  return [value, setValue];
-};
+import useStorageState from "./utils/UseStorageState";
+import normalize from "./utils/Normalize";
+import Title from "./components/title/Title";
+import { useNavigate } from "react-router-dom";
 
 function App() {
-  const [words, setWords] = useStorageState("words", []);
-  const [word, setWord] = useState("");
-  const [translate, setTranslate] = useState("");
+  const navigate = useNavigate();
+  const [words, setWords] = useStorageState("words", wordsData);
   const [searchTerm, setSearchTerm] = useState("");
-
-  function normalize(text) {
-    return text.trim().toLowerCase();
-  }
-
   const searchedWords = words.filter(({ word, translate }) => {
     return (
       word.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -41,41 +17,12 @@ function App() {
     );
   });
 
-  function addWord() {
-    if (word === "") {
-      setTranslate("");
-      return;
-    }
-
-    if (
-      words.some(
-        (item) => item.word.trim().toLowerCase() === word.trim().toLowerCase()
-      )
-    ) {
-      alert("Palavra já adicionada.");
-      setWord("");
-      setTranslate("");
-      return;
-    }
-
-    setWords([
-      ...words,
-      { word: normalize(word)  , translate: normalize(translate) },
-    ]);
-    setWord("");
-    setTranslate("");
-
-    alert("Adicionada!");
-  }
-
-  function handleInputWord(event) {
-    const word = event.target.value;
-    setWord(word);
-  }
-
-  function handleInputTranslate(event) {
-    const translate = event.target.value;
-    setTranslate(translate);
+  function handleNormalizeWords() {
+    const normalized = words.map(({ word, translate }) => ({
+      word: normalize(word),
+      translate: normalize(translate),
+    }));
+    setWords(normalized);
   }
 
   function handleInputSearch(event) {
@@ -91,58 +38,52 @@ function App() {
     }
   }
 
+  function handleEdit(index) {
+    navigate(`edit/${index}`);
+  }
+
   function handleExportJson() {
     const wordsJson = JSON.stringify(words, null, 2);
-
     const blob = new Blob([wordsJson], { type: "application/json" });
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement("a");
     a.href = url;
     a.download = "words.json";
     a.click();
-
     URL.revokeObjectURL(url);
   }
 
-  function handleSort(){
-    const sorted = [...words].sort((a,b) => a.word.localeCompare(b.word))
-    setWords(sorted)
+  function handleSort() {
+    const sorted = [...words].sort((a, b) => a.word.localeCompare(b.word));
+    setWords(sorted);
   }
 
   return (
     <>
-      <h1>Dictionary</h1>
+      <Title title="Dictionary" color="text-yellow-400" />
       <div>
-        <button type="button" onClick={() => handleExportJson()}>
+        <button
+          type="button"
+          onClick={() => handleExportJson()}
+          className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
           Export to json
         </button>
-        <button type="button" onClick={() => handleSort()}>Sort</button>
+        <button
+          type="button"
+          onClick={() => handleSort()}
+          className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Sort
+        </button>
+        <button
+          type="button"
+          onClick={() => handleNormalizeWords()}
+          className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          normalize
+        </button>
       </div>
-      <label htmlFor="word">Word:</label>
-      &nbsp;
-      <input
-        id="word"
-        type="text"
-        placeholder="New word"
-        aria-label="New word"
-        title="New word"
-        value={word}
-        onChange={handleInputWord}
-      />
-      <div>
-        <label htmlFor="translate">Translate:</label>
-        <input
-          id="translate"
-          type="text"
-          placeholder="New translate"
-          title="New translate"
-          aria-label="New translate"
-          value={translate}
-          onChange={handleInputTranslate}
-        />
-      </div>
-      {word && translate ? <button onClick={addWord}>Add</button> : <></>}
       <hr />
       <label htmlFor="searchTerm">Search:</label>
       <input
@@ -159,6 +100,11 @@ function App() {
           return (
             <li key={`${word}-${index}`}>
               <strong>{word}</strong> - {translate} -
+              <span>
+                <button type="button" onClick={() => handleEdit(index)}>
+                  edit
+                </button>
+              </span>
               <span>
                 <button type="button" onClick={() => handleRemoveWord(word)}>
                   X

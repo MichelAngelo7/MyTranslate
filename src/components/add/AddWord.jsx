@@ -1,0 +1,103 @@
+import React from "react";
+import Title from "../title/Title";
+import { useState } from "react";
+import wordsData from "../../data/words.json";
+import useStorageState from "../../utils/UseStorageState";
+import normalize from "../../utils/Normalize";
+
+function AddWord() {
+  const wordInputRef = React.useRef(null);
+  const [message, setMessage] = useState("");
+  const [translate, setTranslate] = useState("");
+  const [words, setWords] = useStorageState("words", wordsData);
+  const [word, setWord] = useState("");
+
+  function addWord(e) {
+    e.preventDefault();
+
+    if (!word) {
+      setTranslate("");
+      setMessage("Digite uma palavra.");
+      return;
+    }
+
+    if (words.some((item) => normalize(item.word) === normalize(word))) {
+      setMessage("⚠️ Palavra já adicionada.");
+      setWord("");
+      setTranslate("");
+      return;
+    }
+
+    setWords([
+      ...words,
+      { word: normalize(word), translate: normalize(translate) },
+    ]);
+    setWord("");
+    setTranslate("");
+    setMessage("✅ Palavra adicionada!");
+    wordInputRef.current.focus();
+  }
+
+  return (
+    <div className="max-w-md mx-auto p-4 bg-gray-800 rounded-xl shadow-md">
+      <Title title="Adicionar Palavra" color="text-yellow-400" />
+
+      <form onSubmit={addWord} className="space-y-4">
+        <div>
+          <label
+            htmlFor="word"
+            className="block text-sm font-medium text-white"
+          >
+            Word:
+          </label>
+          <input
+            ref={wordInputRef}
+            id="word"
+            type="text"
+            placeholder="New word"
+            value={word}
+            onChange={(e) => setWord(e.target.value)}
+            className="w-full mt-1 p-2 rounded-md border border-gray-500 bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="translate"
+            className="block text-sm font-medium text-white"
+          >
+            Translate:
+          </label>
+          <input
+            id="translate"
+            type="text"
+            placeholder="New translate"
+            value={translate}
+            onChange={(e) => setTranslate(e.target.value)}
+            className="w-full mt-1 p-2 rounded-md border border-gray-500 bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={!word || !translate}
+          className="w-full p-2 rounded-md bg-yellow-400 text-white font-bold hover:bg-yellow-500 disabled:opacity-50"
+        >
+          {message === "✅ Palavra adicionada!" ? "Added!" : "Add"}
+        </button>
+      </form>
+
+      {message && (
+        <p
+          className={`mt-3 text-sm text-center ${
+            message.includes("⚠️") ? "text-red-400" : "text-green-400"
+          }`}
+        >
+          {message}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export default AddWord;

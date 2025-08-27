@@ -1,26 +1,26 @@
 import { useEffect, useState } from "react";
 
-function UseStorageState(key, initialState) {
-  const isArray = Array.isArray(initialState);
-
+function useStorageState(key, initialState) {
   const [value, setValue] = useState(() => {
     const stored = localStorage.getItem(key);
 
-    if (stored) {
-      try {
-        return isArray ? JSON.parse(stored) : stored;
-      } catch {
-        return initialState;
-      }
+    try {
+      return stored ? JSON.parse(stored) : initialState;
+    } catch (err) {
+      console.warn("Erro ao parsear localStorage:", err);
+      return initialState;
     }
-    return initialState;
   });
 
   useEffect(() => {
-    localStorage.setItem(key, isArray ? JSON.stringify(value) : value);
-  }, [key, value, isArray]);
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (err) {
+      console.warn("Erro ao salvar no localStorage:", err);
+    }
+  }, [key, value]);
 
   return [value, setValue];
 }
 
-export default UseStorageState;
+export default useStorageState;
